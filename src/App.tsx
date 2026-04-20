@@ -53,8 +53,7 @@ const parseDecimalVector = (raw: string) => {
 
   try {
     const values = parts.map((part) => new Decimal(part))
-    const hasNonFinite = values.some((value) => !value.isFinite())
-    if (hasNonFinite) {
+    if (values.some((value) => !value.isFinite())) {
       return { error: 'Vector entries must be finite numbers.' }
     }
     return { values }

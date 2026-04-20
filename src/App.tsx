@@ -53,7 +53,7 @@ const parseDecimalVector = (raw: string) => {
 
   try {
     const values = parts.map((part) => new Decimal(part))
-    const hasNonFinite = values.some((value) => !value.isFinite() || value.isNaN())
+    const hasNonFinite = values.some((value) => !value.isFinite())
     if (hasNonFinite) {
       return { error: 'Vector entries must be finite numbers.' }
     }
@@ -202,7 +202,7 @@ function App() {
       }
     }
 
-    if (!b.isFinite() || b.isNaN()) {
+    if (!b.isFinite()) {
       return {
         error: 'Liquidity parameter b must be finite.',
         outcomes: parsedOutcomes.outcomes,

@@ -1,0 +1,169 @@
+.app-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.panel {
+  background: #121722;
+  border: 1px solid #273043;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+h1,
+h2,
+h3,
+strong {
+  color: #f8fafc;
+  margin: 0;
+}
+
+h2 {
+  margin-bottom: 0.75rem;
+}
+
+.muted {
+  color: #94a3b8;
+}
+
+.balance-box {
+  display: grid;
+  justify-items: end;
+  gap: 0.25rem;
+}
+
+.balance-value {
+  color: #67e8f9;
+  transition: color 220ms ease, transform 220ms ease;
+}
+
+.user-list,
+.prob-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.user-list li,
+.prob-list li {
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid #273043;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  background: #0b111c;
+}
+
+.user-list li.active {
+  border-color: #67e8f9;
+}
+
+.markets {
+  display: grid;
+  gap: 1rem;
+}
+
+.market-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.market-head {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.trade-box {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #273043;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+input {
+  background: #0b111c;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #f8fafc;
+  padding: 0.5rem 0.7rem;
+}
+
+select {
+  background: #0b111c;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #f8fafc;
+  padding: 0.35rem 0.55rem;
+}
+
+button {
+  background: #7c3aed;
+  color: #f8fafc;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  transition: transform 150ms ease, opacity 150ms ease;
+}
+
+button:hover:enabled {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.formula {
+  margin: 0;
+  color: #c4b5fd;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.error {
+  margin: 0;
+  color: #fca5a5;
+}
+
+.ok {
+  margin: 0;
+  color: #86efac;
+}
+
+@media (max-width: 640px) {
+  .market-head,
+  .balance-box {
+    justify-items: start;
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

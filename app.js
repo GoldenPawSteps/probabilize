@@ -143,7 +143,16 @@ function minimum(arr) {
 }
 
 function logSumExpWeighted(q, p, b) {
-  if (!q.length || !p.length || q.length !== p.length || p.some((v) => v <= 0)) {
+  if (
+    !Array.isArray(q) ||
+    !Array.isArray(p) ||
+    !q.length ||
+    !p.length ||
+    q.length !== p.length ||
+    p.some((v) => v <= 0) ||
+    !Number.isFinite(b) ||
+    b <= 0
+  ) {
     throw new Error("Invalid market vectors for LMSR cost computation.");
   }
   const xs = q.map((qi, i) => Math.log(p[i]) + qi / b);
@@ -160,12 +169,22 @@ function marketL(market) {
 }
 
 function marketCost(market, q) {
+  if (!Array.isArray(q) || q.length !== market.p.length) {
+    throw new Error("Invalid quantity vector for cost computation.");
+  }
   const L = marketL(market);
   return L + market.b * logSumExpWeighted(q, market.p, market.b);
 }
 
 function impliedProbabilities(market, q) {
-  if (!q.length || !market.p.length || q.length !== market.p.length) {
+  if (
+    !Array.isArray(q) ||
+    !q.length ||
+    !market.p.length ||
+    q.length !== market.p.length ||
+    !Number.isFinite(market.b) ||
+    market.b <= 0
+  ) {
     throw new Error("Invalid market vectors for probability computation.");
   }
   const xs = q.map((qi, i) => Math.log(market.p[i]) + qi / market.b);

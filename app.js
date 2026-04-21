@@ -223,7 +223,7 @@ function createMarket() {
     };
 
     const L = marketL(market);
-    if (maker.balance + EPS < L) {
+    if (maker.balance < L - EPS) {
       throw new Error(`Insufficient maker balance. Need at least ${L.toFixed(6)}.`);
     }
 
@@ -259,14 +259,14 @@ function takePosition() {
 
     const currentPersonal = ensurePortfolioVector(user, market);
     const nextPersonal = vectorAdd(currentPersonal, delta);
-    if (nextPersonal.some((v) => v < -EPS)) {
+    if (nextPersonal.some((v) => v < 0 && Math.abs(v) > EPS)) {
       throw new Error("Invalid trade: q_t + Δq must stay non-negative componentwise.");
     }
 
     const nextQ = vectorAdd(market.q, delta);
     const deltaC = marketCost(market, nextQ) - marketCost(market, market.q);
 
-    if (user.balance + EPS < deltaC) {
+    if (user.balance < deltaC - EPS) {
       throw new Error(`Insufficient balance. Need ΔC = ${deltaC.toFixed(6)}.`);
     }
 

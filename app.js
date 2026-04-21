@@ -1,5 +1,6 @@
 const INITIAL_BALANCE = 1;
 const EPS = 1e-9;
+const PRIOR_SUM_TOLERANCE = 1e-6;
 const STORAGE_KEY = "probabilize-state";
 
 const state = loadState();
@@ -193,7 +194,7 @@ function createMarket() {
       throw new Error("Each prior must be greater than 0.");
     }
     const priorSum = priors.reduce((a, v) => a + v, 0);
-    if (Math.abs(priorSum - 1) > 1e-6) {
+    if (Math.abs(priorSum - 1) > PRIOR_SUM_TOLERANCE) {
       throw new Error("Priors must sum to 1.");
     }
     if (!Number.isFinite(b) || b <= 0) {
@@ -304,7 +305,7 @@ function closeMarket() {
 }
 
 function clampNonNegative(value) {
-  return value < 0 && value > -EPS ? 0 : value;
+  return value < 0 ? 0 : value;
 }
 
 function getSelectedOpenMarket() {

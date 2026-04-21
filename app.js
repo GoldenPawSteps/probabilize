@@ -141,6 +141,9 @@ function minimum(arr) {
 }
 
 function logSumExpWeighted(q, p, b) {
+  if (!q.length || !p.length || q.length !== p.length) {
+    throw new Error("Invalid market vectors for LMSR cost computation.");
+  }
   const xs = q.map((qi, i) => Math.log(p[i]) + qi / b);
   const maxX = Math.max(...xs);
   const sum = xs.reduce((acc, x) => acc + Math.exp(x - maxX), 0);
@@ -157,6 +160,9 @@ function marketCost(market, q) {
 }
 
 function impliedProbabilities(market, q) {
+  if (!q.length || !market.p.length || q.length !== market.p.length) {
+    throw new Error("Invalid market vectors for probability computation.");
+  }
   const xs = q.map((qi, i) => Math.log(market.p[i]) + qi / market.b);
   const maxX = Math.max(...xs);
   const numerators = xs.map((x) => Math.exp(x - maxX));

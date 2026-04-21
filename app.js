@@ -56,11 +56,13 @@ function loadState() {
   }
   try {
     const parsed = JSON.parse(raw);
+    const marketIds = Object.keys(parsed.markets || {}).map(Number).filter(Number.isFinite);
+    const inferredNextMarketId = (marketIds.length ? Math.max(...marketIds) : 0) + 1;
     return {
       users: parsed.users || {},
       markets: parsed.markets || {},
       currentUser: parsed.currentUser || null,
-      nextMarketId: parsed.nextMarketId || 1,
+      nextMarketId: parsed.nextMarketId || inferredNextMarketId,
     };
   } catch {
     return { users: {}, markets: {}, currentUser: null, nextMarketId: 1 };
@@ -141,7 +143,7 @@ function minimum(arr) {
 }
 
 function logSumExpWeighted(q, p, b) {
-  if (!q.length || !p.length || q.length !== p.length) {
+  if (!q.length || !p.length || q.length !== p.length || p.some((v) => v <= 0)) {
     throw new Error("Invalid market vectors for LMSR cost computation.");
   }
   const xs = q.map((qi, i) => Math.log(p[i]) + qi / b);
@@ -151,6 +153,9 @@ function logSumExpWeighted(q, p, b) {
 }
 
 function marketL(market) {
+  if (!market.p.length || market.p.some((v) => v <= 0)) {
+    throw new Error("Invalid priors for market liquidity bound.");
+  }
   return -market.b * Math.log(minimum(market.p));
 }
 

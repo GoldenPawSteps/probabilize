@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Probabilize</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Probabilize</h1>
+      <div id="current-user"></div>
+    </header>
+
+    <main>
+      <section id="auth-view" class="card">
+        <h2>Register / Login</h2>
+        <div class="row">
+          <label for="register-username">New username</label>
+          <input id="register-username" type="text" placeholder="New username" />
+          <button id="register-btn">Register</button>
+        </div>
+        <div class="row">
+          <label for="login-username">Login username</label>
+          <select id="login-username"></select>
+          <button id="login-btn">Login</button>
+        </div>
+        <p id="auth-error" class="error"></p>
+      </section>
+
+      <section id="app-view" class="hidden">
+        <nav class="tabs">
+          <button data-tab="dashboard-tab">Dashboard</button>
+          <button data-tab="create-tab">Create Market</button>
+          <button data-tab="portfolio-tab">Portfolio</button>
+          <button id="logout-btn">Logout</button>
+        </nav>
+
+        <section id="dashboard-tab" class="card tab-content">
+          <h2>Dashboard</h2>
+          <p>Balance: <strong id="user-balance"></strong></p>
+          <h3>Active Markets</h3>
+          <ul id="market-list"></ul>
+          <p id="dashboard-error" class="error"></p>
+        </section>
+
+        <section id="create-tab" class="card tab-content hidden">
+          <h2>Create Market</h2>
+          <label for="outcomes-input">Outcomes (comma separated)</label>
+          <input id="outcomes-input" type="text" placeholder="Yes,No" />
+          <label for="priors-input">Priors (comma separated, sum to 1)</label>
+          <input id="priors-input" type="text" placeholder="0.5,0.5" />
+          <label for="b-input">Liquidity b (> 0)</label>
+          <input id="b-input" type="number" min="0" step="any" placeholder="1" />
+          <button id="create-market-btn">Make Market</button>
+          <p id="create-error" class="error"></p>
+        </section>
+
+        <section id="market-tab" class="card tab-content hidden">
+          <h2 id="market-title">Market Detail</h2>
+          <p id="market-maker"></p>
+          <p id="market-b"></p>
+          <div id="price-list"></div>
+
+          <h3>Take Position</h3>
+          <label for="deltaq-input">Δq (comma separated, can be negative if holdings remain non-negative)</label>
+          <input id="deltaq-input" type="text" placeholder="1,0" />
+          <button id="trade-btn">Take</button>
+          <p id="trade-preview"></p>
+          <p id="trade-error" class="error"></p>
+
+          <button id="close-market-btn" class="danger hidden">Close Market (Unmake)</button>
+        </section>
+
+        <section id="portfolio-tab" class="card tab-content hidden">
+          <h2>Portfolio</h2>
+          <ul id="portfolio-list"></ul>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

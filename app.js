@@ -149,7 +149,7 @@ function logSumExpWeighted(q, p, b) {
     !q.length ||
     !p.length ||
     q.length !== p.length ||
-    p.some((v) => v <= 0) ||
+    p.some((v) => !Number.isFinite(v) || v <= 0) ||
     !Number.isFinite(b) ||
     b <= 0
   ) {
@@ -162,7 +162,13 @@ function logSumExpWeighted(q, p, b) {
 }
 
 function marketL(market) {
-  if (!market.p.length || market.p.some((v) => v <= 0)) {
+  if (
+    !Array.isArray(market.p) ||
+    !market.p.length ||
+    market.p.some((v) => !Number.isFinite(v) || v <= 0) ||
+    !Number.isFinite(market.b) ||
+    market.b <= 0
+  ) {
     throw new Error("Invalid priors for market liquidity bound.");
   }
   return -market.b * Math.log(minimum(market.p));
@@ -182,6 +188,7 @@ function impliedProbabilities(market, q) {
     !q.length ||
     !market.p.length ||
     q.length !== market.p.length ||
+    market.p.some((v) => !Number.isFinite(v) || v <= 0) ||
     !Number.isFinite(market.b) ||
     market.b <= 0
   ) {
@@ -317,10 +324,7 @@ function closeMarket() {
   const makerPayout = marketCost(market, market.q) - dot(grad, market.q);
   maker.balance = clampNonNegative(maker.balance + makerPayout);
 
-  Object.entries(state.users).forEach(([username, user]) => {
-    if (username === market.maker) {
-      return;
-    }
+  Object.entries(state.users).forEach(([, user]) => {
     const qT = user.portfolios[market.id];
     if (!qT) {
       return;
@@ -360,9 +364,17 @@ function render() {
 
 function renderAuth() {
   const usernames = Object.keys(state.users).sort();
-  elements.loginUsername.innerHTML = `<option value="">Select user</option>${usernames
-    .map((u) => `<option value="${u}">${u}</option>`)
-    .join("")}`;
+  elements.loginUsername.replaceChildren();
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Select user";
+  elements.loginUsername.appendChild(defaultOption);
+  usernames.forEach((u) => {
+    const option = document.createElement("option");
+    option.value = u;
+    option.textContent = u;
+    elements.loginUsername.appendChild(option);
+  });
 
   const loggedIn = !!state.currentUser;
   elements.authView.classList.toggle("hidden", loggedIn);
@@ -383,24 +395,27 @@ function renderAuth() {
 
 function renderDashboard() {
   const markets = Object.values(state.markets).sort((a, b) => Number(a.id) - Number(b.id));
+  elements.marketList.replaceChildren();
   if (!markets.length) {
-    elements.marketList.innerHTML = "<li>No markets yet.</li>";
+    const item = document.createElement("li");
+    item.textContent = "No markets yet.";
+    elements.marketList.appendChild(item);
     return;
   }
 
-  elements.marketList.innerHTML = markets
-    .map((m) => {
-      const status = m.open ? "open" : "closed";
-      return `<li><button data-market-id="${m.id}">#${m.id} ${m.outcomes.join(" / ")} (${status})</button></li>`;
-    })
-    .join("");
-
-  [...elements.marketList.querySelectorAll("button[data-market-id]")].forEach((btn) => {
+  markets.forEach((m) => {
+    const status = m.open ? "open" : "closed";
+    const item = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.dataset.marketId = m.id;
+    btn.textContent = `#${m.id} ${m.outcomes.join(" / ")} (${status})`;
     btn.addEventListener("click", () => {
       selectedMarketId = btn.dataset.marketId;
       openTab("market-tab");
       render();
     });
+    item.appendChild(btn);
+    elements.marketList.appendChild(item);
   });
 }
 
@@ -422,11 +437,12 @@ function renderMarket() {
   elements.marketTitle.textContent = `Market #${market.id} — ${status}`;
   elements.marketMaker.textContent = `Maker: ${market.maker}`;
   elements.marketB.textContent = `Liquidity b: ${market.b}`;
-  elements.priceList.innerHTML = market.outcomes
-    .map((outcome, i) => {
-      return `<div>${outcome}: π = ${probs[i].toFixed(6)} | q = ${market.q[i].toFixed(6)}</div>`;
-    })
-    .join("");
+  elements.priceList.replaceChildren();
+  market.outcomes.forEach((outcome, i) => {
+    const row = document.createElement("div");
+    row.textContent = `${outcome}: π = ${probs[i].toFixed(6)} | q = ${market.q[i].toFixed(6)}`;
+    elements.priceList.appendChild(row);
+  });
 
   if (market.open) {
     renderTradePreview();
@@ -468,24 +484,26 @@ function renderTradePreview() {
 function renderPortfolio() {
   const username = state.currentUser;
   if (!username) {
-    elements.portfolioList.innerHTML = "";
+    elements.portfolioList.replaceChildren();
     return;
   }
   const user = state.users[username];
   const entries = Object.entries(user.portfolios).filter(([, vec]) => vec.some((v) => Math.abs(v) > EPS));
   if (!entries.length) {
-    elements.portfolioList.innerHTML = "<li>No active positions.</li>";
+    const item = document.createElement("li");
+    item.textContent = "No active positions.";
+    elements.portfolioList.replaceChildren(item);
     return;
   }
-
-  elements.portfolioList.innerHTML = entries
-    .map(([marketId, vec]) => {
-      const market = state.markets[marketId];
-      if (!market) {
-        return "";
-      }
-      const detail = vec.map((v, i) => `${market.outcomes[i]}: ${v.toFixed(6)}`).join(", ");
-      return `<li>Market #${marketId}: ${detail}</li>`;
-    })
-    .join("");
+  const items = entries.flatMap(([marketId, vec]) => {
+    const market = state.markets[marketId];
+    if (!market) {
+      return [];
+    }
+    const detail = vec.map((v, i) => `${market.outcomes[i]}: ${v.toFixed(6)}`).join(", ");
+    const item = document.createElement("li");
+    item.textContent = `Market #${marketId}: ${detail}`;
+    return [item];
+  });
+  elements.portfolioList.replaceChildren(...items);
 }

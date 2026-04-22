@@ -29,6 +29,12 @@ main {
   padding: 0 1rem;
 }
 
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
 .card {
   background: #fff;
   border-radius: 8px;
@@ -42,6 +48,42 @@ main {
   gap: 0.5rem;
   flex-wrap: wrap;
   margin-bottom: 1rem;
+}
+
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.summary-card {
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #dbe4f0;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%);
+}
+
+.summary-card-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5b6b83;
+  margin-bottom: 0.45rem;
+}
+
+.summary-card-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #10213a;
+  line-height: 1.25;
+}
+
+.summary-card-detail {
+  margin-top: 0.35rem;
+  font-size: 0.88rem;
+  color: #506074;
 }
 
 .tabs button,
@@ -71,6 +113,60 @@ select {
   border-radius: 6px;
   margin-bottom: 0.5rem;
   font-size: 16px;
+}
+
+.create-helper-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.85rem;
+}
+
+.create-helper-toolbar button {
+  background: #eef4ff;
+  border-color: #bfd4ff;
+  color: #153f8a;
+}
+
+.create-preview {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.create-preview-summary {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.create-preview-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+
+.create-preview-chip {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.create-preview-chip-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.create-preview-chip-value {
+  font-size: 0.88rem;
+  color: #475569;
+}
+
+.create-preview-note {
+  margin-top: -0.1rem;
 }
 
 .hidden {
@@ -458,5 +554,13 @@ li {
 
   .row {
     flex-direction: column;
+  }
+
+  .create-helper-toolbar {
+    flex-direction: column;
+  }
+
+  .create-helper-toolbar button {
+    width: 100%;
   }
 }

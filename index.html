@@ -47,6 +47,7 @@
         <section id="dashboard-tab" class="card tab-content">
           <h2>Dashboard</h2>
           <p>Balance: <strong id="user-balance"></strong></p>
+          <div id="dashboard-summary" class="dashboard-summary" aria-live="polite"></div>
           <h3>Active Markets</h3>
           <div class="dashboard-market-toolbar">
             <label for="market-search-input">Search</label>
@@ -77,10 +78,17 @@
           <input id="market-name-input" type="text" placeholder="Will it rain tomorrow?" />
           <label for="outcomes-input">Outcomes (comma separated)</label>
           <input id="outcomes-input" type="text" placeholder="Yes,No" />
+          <div class="create-helper-toolbar" aria-label="Market creation helpers">
+            <button id="preset-binary-btn" type="button">Binary preset</button>
+            <button id="preset-three-way-btn" type="button">Three-way preset</button>
+            <button id="equalize-priors-btn" type="button">Even priors</button>
+            <button id="normalize-priors-btn" type="button">Normalize priors</button>
+          </div>
           <label for="priors-input">Priors (comma separated, sum to 1)</label>
           <input id="priors-input" type="text" placeholder="0.5,0.5" />
           <label for="b-input">Liquidity b (> 0)</label>
           <input id="b-input" type="number" min="0" step="any" placeholder="1" />
+          <div id="create-preview" class="create-preview"></div>
           <p id="create-cost-info" class="muted">Cost preview appears after valid priors and liquidity b.</p>
           <button id="create-market-btn">Make Market</button>
           <p id="create-error" class="error"></p>

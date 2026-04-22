@@ -27,6 +27,7 @@ const elements = {
   logoutBtn: document.getElementById("logout-btn"),
   authError: document.getElementById("auth-error"),
   userBalance: document.getElementById("user-balance"),
+  dashboardSummary: document.getElementById("dashboard-summary"),
   marketSearchInput: document.getElementById("market-search-input"),
   activeMarketSort: document.getElementById("active-market-sort"),
   marketList: document.getElementById("market-list"),
@@ -37,8 +38,13 @@ const elements = {
   dashboardError: document.getElementById("dashboard-error"),
   marketNameInput: document.getElementById("market-name-input"),
   outcomesInput: document.getElementById("outcomes-input"),
+  presetBinaryBtn: document.getElementById("preset-binary-btn"),
+  presetThreeWayBtn: document.getElementById("preset-three-way-btn"),
+  equalizePriorsBtn: document.getElementById("equalize-priors-btn"),
+  normalizePriorsBtn: document.getElementById("normalize-priors-btn"),
   priorsInput: document.getElementById("priors-input"),
   bInput: document.getElementById("b-input"),
+  createPreview: document.getElementById("create-preview"),
   createCostInfo: document.getElementById("create-cost-info"),
   createMarketBtn: document.getElementById("create-market-btn"),
   createError: document.getElementById("create-error"),
@@ -63,6 +69,12 @@ elements.loginBtn.addEventListener("click", loginUser);
 elements.logoutBtn.addEventListener("click", logoutUser);
 elements.logoutAllBtn.addEventListener("click", logoutAllDevices);
 elements.createMarketBtn.addEventListener("click", createMarket);
+elements.presetBinaryBtn?.addEventListener("click", () => applyOutcomePreset(["Yes", "No"]));
+elements.presetThreeWayBtn?.addEventListener("click", () => applyOutcomePreset(["Yes", "No", "Unsure"]));
+elements.equalizePriorsBtn?.addEventListener("click", setEvenPriorsFromOutcomes);
+elements.normalizePriorsBtn?.addEventListener("click", normalizePriorsFromInput);
+elements.outcomesInput?.addEventListener("input", renderCreatePreview);
+elements.outcomesInput?.addEventListener("change", renderCreatePreview);
 elements.priorsInput.addEventListener("input", renderCreateCostInfo);
 elements.bInput.addEventListener("input", renderCreateCostInfo);
 elements.priorsInput.addEventListener("change", renderCreateCostInfo);
@@ -120,6 +132,7 @@ async function init() {
   try {
     await refreshState();
     render();
+    renderCreatePreview();
     renderCreateCostInfo();
   } catch (err) {
     elements.authError.textContent = "Startup error: " + err.message;
@@ -258,6 +271,24 @@ function parseNumberList(input, field) {
     throw new Error(`${field} must be a comma-separated numeric list.`);
   }
   return values;
+}
+
+function parseOutcomeList(input) {
+  const outcomes = String(input || "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const deduped = [];
+  const seen = new Set();
+  for (const outcome of outcomes) {
+    const key = outcome.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    deduped.push(outcome);
+    seen.add(key);
+  }
+  return deduped;
 }
 
 function parseFiniteNumber(value) {
@@ -404,10 +435,7 @@ async function createMarket() {
   resetErrors();
   try {
     const name = elements.marketNameInput.value.trim();
-    const outcomes = elements.outcomesInput.value
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const outcomes = parseOutcomeList(elements.outcomesInput.value);
     const priors = parseNumberList(elements.priorsInput.value, "Priors");
     const b = parseFiniteNumber(elements.bInput.value);
     if (!Number.isFinite(b) || b <= 0) {
@@ -420,6 +448,7 @@ async function createMarket() {
     elements.outcomesInput.value = "";
     elements.priorsInput.value = "";
     elements.bInput.value = "";
+    renderCreatePreview();
     renderCreateCostInfo();
     selectedMarketId = market.id;
     openTab("market-tab");
@@ -430,6 +459,7 @@ async function createMarket() {
 }
 
 function renderCreateCostInfo() {
+  renderCreatePreview();
   const createCostInfo = ensureCreateCostInfoElement();
   if (!createCostInfo) {
     return;
@@ -475,6 +505,134 @@ function renderCreateCostInfo() {
     parts.push(balanceText);
   }
   createCostInfo.textContent = parts.join(" | ");
+}
+
+function renderCreatePreview() {
+  if (!elements.createPreview) {
+    return;
+  }
+
+  const outcomes = parseOutcomeList(elements.outcomesInput.value);
+  const priorsText = elements.priorsInput.value.trim();
+  elements.createPreview.replaceChildren();
+
+  if (!outcomes.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "Add comma-separated outcomes to preview the initial market structure.";
+    elements.createPreview.appendChild(empty);
+    return;
+  }
+
+  const summary = document.createElement("div");
+  summary.className = "create-preview-summary";
+  summary.textContent = `${outcomes.length} outcome${outcomes.length === 1 ? "" : "s"} detected`;
+  elements.createPreview.appendChild(summary);
+
+  let priors = [];
+  let priorError = "";
+  if (priorsText) {
+    try {
+      priors = parseNumberList(priorsText, "Priors");
+    } catch {
+      priorError = "Priors are not yet parseable as numbers.";
+    }
+  }
+
+  const list = document.createElement("div");
+  list.className = "create-preview-list";
+  outcomes.forEach((outcome, index) => {
+    const chip = document.createElement("div");
+    chip.className = "create-preview-chip";
+
+    const name = document.createElement("span");
+    name.className = "create-preview-chip-name";
+    name.textContent = outcome;
+
+    const value = document.createElement("span");
+    value.className = "create-preview-chip-value";
+    if (priors.length === outcomes.length && priors[index] > 0) {
+      value.textContent = `${(priors[index] * 100).toFixed(1)}% prior`;
+    } else if (!priorsText) {
+      value.textContent = "waiting for priors";
+    } else {
+      value.textContent = "prior mismatch";
+    }
+
+    chip.append(name, value);
+    list.appendChild(chip);
+  });
+  elements.createPreview.appendChild(list);
+
+  const helper = document.createElement("p");
+  helper.className = "muted create-preview-note";
+  if (priorError) {
+    helper.textContent = priorError;
+  } else if (priorsText && priors.length !== outcomes.length) {
+    helper.textContent = "The number of priors must match the number of outcomes.";
+  } else if (priors.length === outcomes.length) {
+    const total = priors.reduce((sum, value) => sum + value, 0);
+    helper.textContent = `Current prior total: ${total.toFixed(6)}.`;
+  } else {
+    helper.textContent = "Use Even priors to generate a balanced starting market.";
+  }
+  elements.createPreview.appendChild(helper);
+}
+
+function applyOutcomePreset(outcomes) {
+  elements.outcomesInput.value = outcomes.join(",");
+  setEvenPriors(outcomes.length);
+}
+
+function setEvenPriorsFromOutcomes() {
+  const outcomes = parseOutcomeList(elements.outcomesInput.value);
+  if (!outcomes.length) {
+    elements.createError.textContent = "Add at least one outcome before generating priors.";
+    return;
+  }
+  setEvenPriors(outcomes.length);
+}
+
+function setEvenPriors(count) {
+  resetErrors();
+  if (!Number.isInteger(count) || count <= 0) {
+    return;
+  }
+  const value = 1 / count;
+  const priors = Array.from({ length: count }, () => value.toFixed(6));
+  elements.priorsInput.value = priors.join(",");
+  renderCreatePreview();
+  renderCreateCostInfo();
+}
+
+function normalizePriorsFromInput() {
+  resetErrors();
+  const outcomes = parseOutcomeList(elements.outcomesInput.value);
+  let priors;
+  try {
+    priors = parseNumberList(elements.priorsInput.value, "Priors");
+  } catch (err) {
+    elements.createError.textContent = err.message;
+    return;
+  }
+
+  if (outcomes.length && priors.length !== outcomes.length) {
+    elements.createError.textContent = "Outcomes and priors lengths must match before normalization.";
+    return;
+  }
+  if (priors.some((value) => value <= 0)) {
+    elements.createError.textContent = "Each prior must be greater than 0 before normalization.";
+    return;
+  }
+  const total = priors.reduce((sum, value) => sum + value, 0);
+  if (!Number.isFinite(total) || total <= 0) {
+    elements.createError.textContent = "Priors must sum to a positive number before normalization.";
+    return;
+  }
+
+  elements.priorsInput.value = priors.map((value) => (value / total).toFixed(6)).join(",");
+  renderCreatePreview();
+  renderCreateCostInfo();
 }
 
 function ensureCreateCostInfoElement() {
@@ -591,6 +749,8 @@ function renderDashboard() {
     .sort((a, b) => Number(a.id) - Number(b.id));
   const sortedActiveMarkets = sortActiveMarkets(activeMarkets, activeMarketSort);
 
+  renderDashboardSummary(activeMarkets, closedMarkets);
+
   elements.marketList.replaceChildren();
   if (!sortedActiveMarkets.length) {
     const item = document.createElement("li");
@@ -617,6 +777,62 @@ function renderDashboard() {
 
   renderHistory();
   renderSessions();
+}
+
+function renderDashboardSummary(activeMarkets, closedMarkets) {
+  if (!elements.dashboardSummary) {
+    return;
+  }
+
+  const openCount = activeMarkets.length;
+  const closedCount = closedMarkets.length;
+  const makerCount = activeMarkets.filter((market) => market.maker === currentUser).length;
+  const positionCount = activeMarkets.filter((market) => {
+    const position = state.portfolios[String(market.id)] || [];
+    return position.some((value) => Math.abs(value) > EPS);
+  }).length;
+
+  let leadText = "No open markets";
+  if (activeMarkets.length) {
+    const mostUncertain = [...activeMarkets]
+      .map((market) => {
+        const probs = impliedProbabilities(market.p, market.b, market.q);
+        return {
+          market,
+          confidence: Math.max(...probs),
+        };
+      })
+      .sort((a, b) => a.confidence - b.confidence || Number(b.market.id) - Number(a.market.id))[0];
+    leadText = `Most uncertain: #${mostUncertain.market.id} ${mostUncertain.market.name}`;
+  }
+
+  const cards = [
+    { label: "Open markets", value: String(openCount), detail: `${closedCount} closed` },
+    { label: "Your maker markets", value: String(makerCount), detail: makerCount ? "Open markets you can close" : "None currently open" },
+    { label: "Your live positions", value: String(positionCount), detail: positionCount ? "Markets with active exposure" : "No open exposure" },
+    { label: "Watch next", value: leadText, detail: activeMarkets.length ? "Closest market to a toss-up" : "Create a market to begin" },
+  ];
+
+  elements.dashboardSummary.replaceChildren();
+  cards.forEach((card) => {
+    const article = document.createElement("article");
+    article.className = "summary-card";
+
+    const label = document.createElement("div");
+    label.className = "summary-card-label";
+    label.textContent = card.label;
+
+    const value = document.createElement("div");
+    value.className = "summary-card-value";
+    value.textContent = card.value;
+
+    const detail = document.createElement("div");
+    detail.className = "summary-card-detail";
+    detail.textContent = card.detail;
+
+    article.append(label, value, detail);
+    elements.dashboardSummary.appendChild(article);
+  });
 }
 
 function marketMatchesSearch(market) {
@@ -1407,7 +1623,7 @@ function renderPortfolio() {
       line1.append(marketBtn, document.createTextNode(` (maker, q-state): ${qState}`));
       const line2 = document.createElement("div");
       line2.className = "portfolio-pnl";
-      line2.textContent = `Prices: ${prices} | Created cost C_0: ${createdCost.toFixed(6)} | Close L: ${closeL.toFixed(6)}`;
+      line2.textContent = `Prices: ${prices} | Created cost C_0: ${createdCost.toFixed(6)} | Close value: ${closeL.toFixed(6)}`;
       item.append(line1, line2);
     } else {
       hasTaker = true;
@@ -1425,7 +1641,7 @@ function renderPortfolio() {
       line1.append(marketBtn, document.createTextNode(`: ${holdings}`));
       const line2 = document.createElement("div");
       line2.className = "portfolio-pnl";
-      line2.textContent = `Prices: ${prices} | Trade costs: ${tradeCosts.toFixed(6)} | Liq. PnL: ${liqPnl.toFixed(6)} | Unrealized PnL: ${unrealPnl.toFixed(6)}`;
+      line2.textContent = `Prices: ${prices} | Trade costs: ${tradeCosts.toFixed(6)} | Liquidation PnL: ${liqPnl.toFixed(6)} | Unrealized PnL: ${unrealPnl.toFixed(6)}`;
       item.append(line1, line2);
     }
 
@@ -1437,19 +1653,19 @@ function renderPortfolio() {
   summary.className = "portfolio-summary";
   const lines = [];
   if (hasTaker) {
-    lines.push(`Taker — Liq. PnL: ${sumTakerLiq.toFixed(6)} | Unrealized PnL: ${sumTakerUnreal.toFixed(6)}`);
+    lines.push(`Taker — Liquidation PnL: ${sumTakerLiq.toFixed(6)} | Unrealized PnL: ${sumTakerUnreal.toFixed(6)}`);
   }
   if (hasMaker) {
-    lines.push(`Maker — Close L: ${sumMakerCloseL.toFixed(6)}`);
+    lines.push(`Maker — Close value: ${sumMakerCloseL.toFixed(6)}`);
   }
   if (Number.isFinite(currentBalance)) {
     const overallLiqPnl = sumTakerLiq + sumMakerCloseL;
     const overallUnrealPnl = sumTakerUnreal + sumMakerCloseL;
     const liqTotal = sumTakerGrossLiq + sumMakerGross;
     const unrealTotal = sumTakerGrossUnreal + sumMakerGross;
-    lines.push(`Overall Liq. PnL: ${overallLiqPnl.toFixed(6)} | Unrealized PnL: ${overallUnrealPnl.toFixed(6)}`);
-    lines.push(`Liq. total: ${liqTotal.toFixed(6)} | Unreal. total: ${unrealTotal.toFixed(6)}`);
-    lines.push(`Liq. balance: ${(currentBalance + liqTotal).toFixed(6)} | Unrealized balance: ${(currentBalance + unrealTotal).toFixed(6)}`);
+    lines.push(`Overall Liquidation PnL: ${overallLiqPnl.toFixed(6)} | Overall Unrealized PnL: ${overallUnrealPnl.toFixed(6)}`);
+    lines.push(`Liquidation total: ${liqTotal.toFixed(6)} | Unrealized total: ${unrealTotal.toFixed(6)}`);
+    lines.push(`Liquidation balance: ${(currentBalance + liqTotal).toFixed(6)} | Unrealized balance: ${(currentBalance + unrealTotal).toFixed(6)}`);
   }
   if (lines.length) {
     const hr = document.createElement("hr");

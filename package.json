@@ -1,0 +1,28 @@
+{
+  "name": "probabilize",
+  "version": "1.0.0",
+  "description": "Open `index.html` in a browser (or serve the directory) to run the Probabilize web app.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed:demo": "node scripts/seed-demo.js",
+    "seed:check": "node scripts/seed-check.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoldenPawSteps/probabilize.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/GoldenPawSteps/probabilize/issues"
+  },
+  "homepage": "https://github.com/GoldenPawSteps/probabilize#readme",
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "express": "^5.2.1"
+  }
+}

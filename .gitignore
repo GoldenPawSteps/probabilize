@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Local runtime data
+probabilize.db
+server.log
+
+# Environment files
+.env
+.env.*

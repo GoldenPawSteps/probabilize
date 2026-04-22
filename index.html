@@ -18,11 +18,19 @@
         <div class="row">
           <label for="register-username">New username</label>
           <input id="register-username" type="text" placeholder="New username" />
+          <label for="register-password">New password</label>
+          <input id="register-password" type="password" placeholder="At least 6 characters" />
           <button id="register-btn">Register</button>
         </div>
         <div class="row">
           <label for="login-username">Login username</label>
-          <select id="login-username"></select>
+          <input id="login-username" type="text" placeholder="Existing username" />
+          <label for="login-password">Login password</label>
+          <input id="login-password" type="password" placeholder="Password" />
+          <label for="remember-me">
+            <input id="remember-me" type="checkbox" />
+            Remember me
+          </label>
           <button id="login-btn">Login</button>
         </div>
         <p id="auth-error" class="error"></p>
@@ -40,18 +48,40 @@
           <h2>Dashboard</h2>
           <p>Balance: <strong id="user-balance"></strong></p>
           <h3>Active Markets</h3>
+          <div class="dashboard-market-toolbar">
+            <label for="market-search-input">Search</label>
+            <input id="market-search-input" class="dashboard-market-search" type="text" placeholder="id, name, maker, outcome" />
+            <label for="active-market-sort">Sort by</label>
+            <select id="active-market-sort" class="dashboard-market-sort-select">
+              <option value="uncertain">Most uncertain</option>
+              <option value="qsum">Highest q-sum</option>
+              <option value="highest-c" selected>Highest C</option>
+              <option value="newest">Newest</option>
+              <option value="id">Market id</option>
+            </select>
+          </div>
           <ul id="market-list"></ul>
+          <h3>Closed Markets</h3>
+          <ul id="closed-market-list"></ul>
+          <h3>History</h3>
+          <ul id="history-list"></ul>
+          <h3>Sessions</h3>
+          <ul id="session-list"></ul>
+          <button id="logout-all-btn" class="danger">Logout All Devices</button>
           <p id="dashboard-error" class="error"></p>
         </section>
 
         <section id="create-tab" class="card tab-content hidden">
           <h2>Create Market</h2>
+          <label for="market-name-input">Market name</label>
+          <input id="market-name-input" type="text" placeholder="Will it rain tomorrow?" />
           <label for="outcomes-input">Outcomes (comma separated)</label>
           <input id="outcomes-input" type="text" placeholder="Yes,No" />
           <label for="priors-input">Priors (comma separated, sum to 1)</label>
           <input id="priors-input" type="text" placeholder="0.5,0.5" />
           <label for="b-input">Liquidity b (> 0)</label>
           <input id="b-input" type="number" min="0" step="any" placeholder="1" />
+          <p id="create-cost-info" class="muted">Cost preview appears after valid priors and liquidity b.</p>
           <button id="create-market-btn">Make Market</button>
           <p id="create-error" class="error"></p>
         </section>
@@ -60,14 +90,17 @@
           <h2 id="market-title">Market Detail</h2>
           <p id="market-maker"></p>
           <p id="market-b"></p>
+          <div id="market-chart" class="market-chart"></div>
           <div id="price-list"></div>
 
-          <h3>Take Position</h3>
-          <label for="deltaq-input">Δq (comma separated, can be negative if holdings remain non-negative)</label>
-          <input id="deltaq-input" type="text" placeholder="1,0" />
-          <button id="trade-btn">Take</button>
-          <p id="trade-preview"></p>
-          <p id="trade-error" class="error"></p>
+          <div id="trade-section">
+            <h3>Take Position</h3>
+            <label for="deltaq-input">Δq (comma separated, can be negative if holdings remain non-negative)</label>
+            <input id="deltaq-input" type="text" placeholder="1,0" />
+            <button id="trade-btn">Take</button>
+            <p id="trade-preview"></p>
+            <p id="trade-error" class="error"></p>
+          </div>
 
           <button id="close-market-btn" class="danger hidden">Close Market (Unmake)</button>
         </section>

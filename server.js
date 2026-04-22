@@ -67,6 +67,15 @@ db.exec(`
     username   TEXT NOT NULL,
     created_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS admin_audit (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    action     TEXT NOT NULL,
+    outcome    TEXT NOT NULL,
+    detail     TEXT NOT NULL,
+    ip         TEXT,
+    user_agent TEXT,
+    created_at TEXT NOT NULL
+  );
   INSERT OR IGNORE INTO meta (key, value) VALUES ('next_market_id', '1');
 `);
 
@@ -109,6 +118,38 @@ const INITIAL_BALANCE = 1;
 const PRIOR_SUM_TOLERANCE = 1e-6;
 const PASSWORD_MIN_LENGTH = 6;
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14;
+const ADMIN_RESET_TOKEN = process.env.ADMIN_RESET_TOKEN || "";
+const ADMIN_RESET_IP_ALLOWLIST = String(process.env.ADMIN_RESET_IP_ALLOWLIST || "")
+  .split(",")
+  .map((ip) => ip.trim())
+  .filter(Boolean);
+
+function normalizeIp(ip) {
+  if (!ip) return "";
+  return String(ip).replace(/^::ffff:/, "");
+}
+
+function getRequestIp(req) {
+  const forwardedFor = String(req.headers["x-forwarded-for"] || "").trim();
+  if (forwardedFor) {
+    const first = forwardedFor.split(",")[0].trim();
+    if (first) return normalizeIp(first);
+  }
+  return normalizeIp(req.ip || req.socket?.remoteAddress || "");
+}
+
+function recordAdminAudit(action, outcome, detail, req) {
+  db.prepare(
+    "INSERT INTO admin_audit (action, outcome, detail, ip, user_agent, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+  ).run(
+    action,
+    outcome,
+    detail,
+    getRequestIp(req) || null,
+    String(req.headers["user-agent"] || "").slice(0, 500),
+    new Date().toISOString()
+  );
+}
 
 function minimum(arr) {
   return arr.reduce((m, v) => (v < m ? v : m), arr[0]);
@@ -609,6 +650,93 @@ app.get("/api/history", requireAuth, (req, res) => {
       "SELECT id, market_id, market_name, action, detail, created_at FROM history WHERE username = ? ORDER BY datetime(created_at) DESC, id DESC LIMIT 50"
     )
     .all(req.authUser);
+  res.json(rows);
+});
+
+app.post("/admin/reset-db", (req, res) => {
+  if (!ADMIN_RESET_TOKEN) {
+    recordAdminAudit("reset-db", "disabled", "Attempted while ADMIN_RESET_TOKEN is not configured.", req);
+    return res.status(404).json({ error: "Not found." });
+  }
+
+  if (ADMIN_RESET_IP_ALLOWLIST.length > 0) {
+    const requestIp = getRequestIp(req);
+    const isAllowed = ADMIN_RESET_IP_ALLOWLIST.map((ip) => normalizeIp(ip)).includes(requestIp);
+    if (!isAllowed) {
+      recordAdminAudit("reset-db", "ip-denied", "Request IP is not in ADMIN_RESET_IP_ALLOWLIST.", req);
+      return res.status(403).json({ error: "IP address is not allowed." });
+    }
+  }
+
+  const presentedToken = String(req.headers["x-reset-token"] || "").trim();
+  if (!presentedToken) {
+    recordAdminAudit("reset-db", "missing-token", "Missing x-reset-token header.", req);
+    return res.status(401).json({ error: "Missing reset token." });
+  }
+
+  const validToken = Buffer.from(ADMIN_RESET_TOKEN, "utf8");
+  const requestToken = Buffer.from(presentedToken, "utf8");
+  const tokenMatches =
+    validToken.length === requestToken.length && crypto.timingSafeEqual(validToken, requestToken);
+  if (!tokenMatches) {
+    recordAdminAudit("reset-db", "invalid-token", "Invalid x-reset-token value.", req);
+    return res.status(403).json({ error: "Invalid reset token." });
+  }
+
+  db.transaction(() => {
+    db.exec(`
+      DELETE FROM sessions;
+      DELETE FROM history;
+      DELETE FROM market_price_history;
+      DELETE FROM portfolios;
+      DELETE FROM markets;
+      DELETE FROM users;
+      DELETE FROM meta;
+    `);
+    db.prepare("INSERT INTO meta (key, value) VALUES ('next_market_id', '1')").run();
+    recordAdminAudit("reset-db", "success", "Database reset completed.", req);
+  })();
+
+  res.json({ ok: true, message: "Database reset completed." });
+});
+
+app.get("/admin/reset-db/check", (req, res) => {
+  const requestIp = getRequestIp(req);
+  const normalizedAllowlist = ADMIN_RESET_IP_ALLOWLIST.map((ip) => normalizeIp(ip));
+  const callerIpAllowed =
+    normalizedAllowlist.length === 0 ? true : normalizedAllowlist.includes(requestIp);
+
+  res.json({
+    resetEnabled: Boolean(ADMIN_RESET_TOKEN),
+    ipAllowlistEnabled: normalizedAllowlist.length > 0,
+    callerIp: requestIp || null,
+    callerIpAllowed,
+  });
+});
+
+app.get("/admin/reset-db/audit", (req, res) => {
+  if (!ADMIN_RESET_TOKEN) {
+    return res.status(404).json({ error: "Not found." });
+  }
+
+  const presentedToken = String(req.headers["x-reset-token"] || "").trim();
+  if (!presentedToken) {
+    return res.status(401).json({ error: "Missing reset token." });
+  }
+
+  const validToken = Buffer.from(ADMIN_RESET_TOKEN, "utf8");
+  const requestToken = Buffer.from(presentedToken, "utf8");
+  const tokenMatches =
+    validToken.length === requestToken.length && crypto.timingSafeEqual(validToken, requestToken);
+  if (!tokenMatches) {
+    return res.status(403).json({ error: "Invalid reset token." });
+  }
+
+  const rows = db
+    .prepare(
+      "SELECT id, action, outcome, detail, ip, user_agent, created_at FROM admin_audit WHERE action = 'reset-db' ORDER BY datetime(created_at) DESC, id DESC LIMIT 100"
+    )
+    .all();
   res.json(rows);
 });
 

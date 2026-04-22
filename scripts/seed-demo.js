@@ -2,7 +2,7 @@ const Database = require("better-sqlite3");
 const path = require("path");
 const crypto = require("crypto");
 
-const dbPath = path.join(__dirname, "..", "probabilize.db");
+const dbPath = process.env.DB_PATH || path.join(__dirname, "..", "probabilize.db");
 const db = new Database(dbPath);
 
 const EPS = 1e-9;

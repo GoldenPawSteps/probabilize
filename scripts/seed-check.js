@@ -1,7 +1,7 @@
 const Database = require("better-sqlite3");
 const path = require("path");
 
-const dbPath = path.join(__dirname, "..", "probabilize.db");
+const dbPath = process.env.DB_PATH || path.join(__dirname, "..", "probabilize.db");
 const db = new Database(dbPath, { readonly: true });
 
 const EPS = 1e-6;

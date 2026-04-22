@@ -1265,6 +1265,7 @@ async function renderMarketChart(market, probabilities) {
   svg.appendChild(interactionLayer);
 
   const axisLabelMode = getHistoryAxisLabelMode(snapshots);
+  const selectedShouldIncludeYear = shouldIncludeYearInSelectedLabel(snapshots);
   const timeLabels = [0, Math.floor((snapshots.length - 1) / 2), snapshots.length - 1]
     .filter((value, index, arr) => arr.indexOf(value) === index)
     .map((snapshotIndex) => ({
@@ -1350,7 +1351,7 @@ async function renderMarketChart(market, probabilities) {
       item.classList.toggle("market-line-legend-item-leader", Math.abs(prob - leaderProbability) <= EPS);
     });
 
-    hoverInfo.textContent = `Selected: ${formatHistoryChartDateTime(snapshot.created_at, axisLabelMode === "date-time-year")} | Event: ${snapshot.event} | Point ${safeIndex + 1} of ${snapshots.length}`;
+    hoverInfo.textContent = `Selected: ${formatHistoryChartDateTime(snapshot.created_at, selectedShouldIncludeYear)} | Event: ${snapshot.event} | Point ${safeIndex + 1} of ${snapshots.length}`;
   }
 
   function eventToIndex(event) {
@@ -1408,6 +1409,22 @@ function getHistoryAxisLabelMode(snapshots) {
 
   const years = new Set(validDates.map((d) => d.getFullYear()));
   return years.size > 1 ? "date-time-year" : "date-time";
+}
+
+function shouldIncludeYearInSelectedLabel(snapshots) {
+  const validYears = snapshots
+    .map((snapshot) => {
+      const ts = Date.parse(snapshot.created_at || "");
+      return Number.isFinite(ts) ? new Date(ts).getFullYear() : null;
+    })
+    .filter((year) => Number.isFinite(year));
+
+  if (!validYears.length) {
+    return false;
+  }
+
+  const currentYear = new Date().getFullYear();
+  return !validYears.every((year) => year === currentYear);
 }
 
 function formatHistoryChartTime(isoString, mode = "time") {

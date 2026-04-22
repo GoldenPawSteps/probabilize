@@ -990,6 +990,14 @@ function renderHistory() {
         if (!/priors\s+/i.test(String(detailText))) {
           detailText = `${detailText} Priors ${sourceMarket.p.join(",")}.`;
         }
+        if (!/\bb\s*=/.test(String(detailText))) {
+          const c0Match = String(detailText).match(/C_0\s*=/);
+          if (c0Match) {
+            detailText = String(detailText).replace(/(C_0\s*=)/, `b = ${sourceMarket.b}. $1`);
+          } else {
+            detailText = `${detailText} b = ${sourceMarket.b}.`;
+          }
+        }
         if (!/C_0\s*=/.test(String(detailText))) {
           const c0 = marketL(sourceMarket.p, sourceMarket.b);
           detailText = `${detailText} C_0 = ${c0.toFixed(6)}.`;

@@ -270,7 +270,7 @@ const seed = db.transaction(() => {
   }
 
   createMarket({
-    id: "2",
+    id: "1",
     name: "Q2 GDP above 2%?",
     maker: "Bob",
     outcomes: ["Yes", "No"],
@@ -281,19 +281,19 @@ const seed = db.transaction(() => {
 
   tradeMarket({
     trader: "Alice",
-    marketId: "2",
+    marketId: "1",
     delta: [0.1, 0.5],
     createdAt: iso(230),
   });
 
   closeMarket({
     maker: "Bob",
-    marketId: "2",
+    marketId: "1",
     createdAt: iso(210),
   });
 
   createMarket({
-    id: "1",
+    id: "2",
     name: "Will it rain tomorrow?",
     maker: "Alice",
     outcomes: ["Yes", "No"],
@@ -304,14 +304,14 @@ const seed = db.transaction(() => {
 
   tradeMarket({
     trader: "Bob",
-    marketId: "1",
+    marketId: "2",
     delta: [0.2, 0],
     createdAt: iso(140),
   });
 
   tradeMarket({
     trader: "Cara",
-    marketId: "1",
+    marketId: "2",
     delta: [0.1, 0],
     createdAt: iso(95),
   });

@@ -52,8 +52,8 @@ function validate() {
   if (!m1 || !m2) {
     fail("Expected market ids 1 and 2.");
   }
-  if (m1.open !== 1 || m2.open !== 0) {
-    fail("Expected market #1 open and market #2 closed.");
+  if (m1.open !== 0 || m2.open !== 1) {
+    fail("Expected market #1 closed and market #2 open.");
   }
 
   const historyCount = db.prepare("SELECT COUNT(*) AS c FROM history").get().c;

@@ -1190,8 +1190,8 @@ async function renderMarketChart(market, probabilities) {
   elements.marketChart.replaceChildren();
 
   const svgNs = "http://www.w3.org/2000/svg";
-  const width = 760;
-  const height = 260;
+  const width = 920;
+  const height = 380;
   const paddingX = 46;
   const paddingY = 20;
   const plotWidth = width - paddingX * 2;
@@ -1350,7 +1350,7 @@ async function renderMarketChart(market, probabilities) {
       item.classList.toggle("market-line-legend-item-leader", Math.abs(prob - leaderProbability) <= EPS);
     });
 
-    hoverInfo.textContent = `Selected: ${formatHistoryChartDateTime(snapshot.created_at)} | Event: ${snapshot.event} | Point ${safeIndex + 1} of ${snapshots.length}`;
+    hoverInfo.textContent = `Selected: ${formatHistoryChartDateTime(snapshot.created_at, axisLabelMode === "date-time-year")} | Event: ${snapshot.event} | Point ${safeIndex + 1} of ${snapshots.length}`;
   }
 
   function eventToIndex(event) {
@@ -1435,17 +1435,28 @@ function formatHistoryChartTime(isoString, mode = "time") {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-function formatHistoryChartDateTime(isoString) {
+function formatHistoryChartDateTime(isoString, includeYear = false) {
   const ts = Date.parse(isoString || "");
   if (!Number.isFinite(ts)) {
     return "now";
   }
-  return new Date(ts).toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(ts).toLocaleString(
+    [],
+    includeYear
+      ? {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      : {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+  );
 }
 
 function renderTradePreview() {

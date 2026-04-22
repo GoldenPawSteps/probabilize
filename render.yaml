@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: probabilize
+    runtime: node
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DB_PATH
+        value: /var/data/probabilize.db
+    disk:
+      name: probabilize-data
+      mountPath: /var/data
+      sizeGB: 1

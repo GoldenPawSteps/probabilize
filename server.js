@@ -4,7 +4,8 @@ const path = require("path");
 const crypto = require("crypto");
 
 const app = express();
-const db = new Database(path.join(__dirname, "probabilize.db"));
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, "probabilize.db");
+const db = new Database(DB_PATH);
 
 app.use(express.json());
 app.use((req, res, next) => {
@@ -609,6 +610,10 @@ app.get("/api/history", requireAuth, (req, res) => {
     )
     .all(req.authUser);
   res.json(rows);
+});
+
+app.get("/healthz", (req, res) => {
+  res.json({ ok: true });
 });
 
 app.use((err, req, res, next) => {

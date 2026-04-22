@@ -1193,7 +1193,7 @@ async function renderMarketChart(market, probabilities) {
   const width = 920;
   const height = 380;
   const paddingX = 46;
-  const paddingY = 20;
+  const paddingY = 28;
   const plotWidth = width - paddingX * 2;
   const plotHeight = height - paddingY * 2;
   const stepX = snapshots.length > 1 ? plotWidth / (snapshots.length - 1) : 0;
@@ -1266,7 +1266,15 @@ async function renderMarketChart(market, probabilities) {
 
   const axisLabelMode = getHistoryAxisLabelMode(snapshots);
   const selectedShouldIncludeYear = shouldIncludeYearInSelectedLabel(snapshots);
-  const timeLabels = [0, Math.floor((snapshots.length - 1) / 2), snapshots.length - 1]
+  const maxXLabels = 5;
+  const labelCount = Math.min(maxXLabels, snapshots.length);
+  const labelIndices = Array.from({ length: labelCount }, (_, index) => {
+    if (labelCount === 1) {
+      return 0;
+    }
+    return Math.round((index * (snapshots.length - 1)) / (labelCount - 1));
+  });
+  const timeLabels = labelIndices
     .filter((value, index, arr) => arr.indexOf(value) === index)
     .map((snapshotIndex) => ({
       x: snapshots.length === 1 ? width / 2 : paddingX + snapshotIndex * stepX,
